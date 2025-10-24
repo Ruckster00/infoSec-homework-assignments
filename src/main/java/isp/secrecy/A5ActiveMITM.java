@@ -5,6 +5,8 @@ import java.security.Key;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+
 import fri.isp.Agent;
 import fri.isp.Environment;
 
@@ -88,14 +90,32 @@ public class A5ActiveMITM {
                 final byte[] bytes = receive("david");
                 final byte[] iv = receive("david");
                 print(" IN: %s", hex(bytes));
+                final String denisMail = "prf.denis@fri.si";
+                final byte[] denisMailBytes = denisMail.getBytes();
+                final String myMail = "isp@gmail.com"; 
+                final byte[] myMailBytes = myMail.getBytes();
+
+                // get mask by xoring known recipient mail with own wanted recepient mail
+                byte[] mask = new byte[Math.max(denisMailBytes.length, myMailBytes.length)];
+                for (int i = 0; i < mask.length; i++) {
+                    byte denisByte = (i < denisMailBytes.length) ? denisMailBytes[i] : 0;
+                    byte myByte = (i < myMailBytes.length) ? myMailBytes[i] : 0;
+                    mask[i] = (byte) (denisByte ^ myByte);
+                } 
+
+                // xor first bytes of orginal cipher text with mask
+                final byte[] newCipherText = bytes.clone();
+                for (int i = 0; i < mask.length && i < newCipherText.length; i++) {
+                    newCipherText[i] ^= mask[i];
+                }
 
                 // As the person-in-the-middle, modify the ciphertext
                 // so that the FMTP server will send the email to you
                 // (Needless to say, you are not allowed to use the key
                 // that is being used by david and server.)
 
-                print("OUT: %s", hex(bytes));
-                send("server", bytes);
+                print("OUT: %s", hex(newCipherText));
+                send("server", newCipherText);
                 send("server", iv);
             }
         });

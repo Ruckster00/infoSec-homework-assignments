@@ -1,5 +1,7 @@
 package isp.secrecy;
 
+import java.nio.charset.StandardCharsets;
+
 import fri.isp.Agent;
 import fri.isp.Environment;
 
@@ -18,7 +20,8 @@ public class AgentCommunication {
         env.add(new Agent("alice") {
             @Override
             public void task() {
-                final byte[] payload = "Hi, Bob, this is Alice.".getBytes();
+                final byte[] payload = "Hi, Bob, this is Alice.".getBytes(StandardCharsets.UTF_8);
+                // send message to recepient bob in byte array format -> serialization is always necessary
                 send("bob", payload);
                 final byte[] received = receive("bob");
                 print("Got '%s', converted to string: '%s'", hex(received), new String(received));
@@ -28,11 +31,11 @@ public class AgentCommunication {
         env.add(new Agent("bob") {
             @Override
             public void task() {
-                send("alice", "Hey Alice, Bob here.".getBytes());
-                print("Got '%s'", new String(receive("alice")));
+                send("alice", "Hey Alice, Bob here.".getBytes(StandardCharsets.UTF_8));
+                print("Got '%s'", new String(receive("alice"), StandardCharsets.UTF_8));
             }
         });
-
+        // task method of alice and bob runs at the same time
         env.connect("alice", "bob");
         env.start();
     }
