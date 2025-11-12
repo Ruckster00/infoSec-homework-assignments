@@ -29,24 +29,26 @@ public class A4ExhaustiveSearch {
         final String message = "I would like to keep this text confidential Bob. Kind regards, Alice.";
         System.out.println("[MESSAGE] " + message);
 
+        // generate random key which has only zeros for the firts 5 bytes and random
+        // combination for the last three bytes
         byte[] secretKey = new byte[8];
         SecureRandom random = new SecureRandom();
         secretKey[5] = (byte) random.nextInt(256);
         secretKey[6] = (byte) random.nextInt(256);
         secretKey[7] = (byte) random.nextInt(256);
-        
+
         System.out.println("[SECRET KEY] " + Agent.hex(secretKey));
-        
+
         Key key = new SecretKeySpec(secretKey, "DES");
         Cipher encrypt = Cipher.getInstance("DES/ECB/PKCS5Padding");
         encrypt.init(Cipher.ENCRYPT_MODE, key);
         byte[] cipherText = encrypt.doFinal(message.getBytes());
-        
+
         System.out.println("[CIPHERTEXT] " + Agent.hex(cipherText));
-        
-        System.out.println("\n--- Starting Brute Force Attack ---");        
+
+        System.out.println("\n--- Starting Brute Force Attack ---");
         byte[] foundKey = bruteForceKey(cipherText, message);
-        
+
         if (foundKey != null) {
             System.out.println("[FOUND KEY] " + Agent.hex(foundKey));
         } else {
@@ -55,31 +57,34 @@ public class A4ExhaustiveSearch {
     }
 
     public static byte[] bruteForceKey(byte[] ct, String message) throws Exception {
-        byte[] possibleKey = new byte[8];        
+        byte[] possibleKey = new byte[8];
         int attempts = 0;
 
-        for (int i = 0; i < (1 << 24); i++) { // 2^24 combinations
+        // go through all possible combinations of the last three bytes (2^24
+        // possibiiities)
+        for (int i = 0; i < (1 << 24); i++) {
             attempts++;
             possibleKey[5] = (byte) ((i >> 16) & 0xFF);
             possibleKey[6] = (byte) ((i >> 8) & 0xFF);
             possibleKey[7] = (byte) (i & 0xFF);
-            
+
             try {
                 Key key = new SecretKeySpec(possibleKey, "DES");
                 Cipher decrypt = Cipher.getInstance("DES/ECB/PKCS5Padding");
                 decrypt.init(Cipher.DECRYPT_MODE, key);
                 final byte[] pt = decrypt.doFinal(ct);
                 String plainMessage = new String(pt);
-                
+
                 if (plainMessage.equals(message)) {
                     return possibleKey;
                 }
-                
+
             } catch (Exception e) {
                 continue;
             }
         }
-        
+
+        // can only happen if the secret key has ones in the first 5 bytes
         System.out.println("Key not found after trying all " + attempts + " possibilities");
         return null;
     }

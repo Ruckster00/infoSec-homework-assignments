@@ -5,7 +5,6 @@ import java.security.Key;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 
 import fri.isp.Agent;
 import fri.isp.Environment;
