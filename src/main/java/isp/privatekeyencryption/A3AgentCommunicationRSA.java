@@ -1,4 +1,4 @@
-package isp;
+package isp.privatekeyencryption;
 
 import fri.isp.Agent;
 import fri.isp.Environment;
